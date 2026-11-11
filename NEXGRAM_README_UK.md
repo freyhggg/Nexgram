@@ -76,10 +76,10 @@ NEXGRAM — модифікація вихідного коду Telegram for Andr
 - [x] Intelligence: координатор + 3 адаптери + UI (код).
 - [x] NEXGRAM Island: NotificationCenter + вікно + налаштування (код).
 - [x] google-services.json виправлений для нових package ID.
-- [ ] Gradle-компіляція Java/Kotlin/ресурсів (у процесі перевірки, Termux).
+- [x] Gradle-компіляція Java/Kotlin/ресурсів: **BUILD SUCCESSFUL** (`:TMessagesProj_App:compileAfatDebugJavaWithJavac`, 209 задач, Termux + qemu-aapt2, режим `-PnoNative`).
 - [ ] Повна нативна збірка (AndroidIDE з NDK 27.2 або GitHub Actions).
 - [ ] Встановлення та runtime-тест на Realme 12 4G / Android 16.
 - [ ] NEXGRAM Nearby (BLE/Wi-Fi Direct) — наступний етап.
 - [ ] Дизайн екранів дзвінків (VoIP-тема) — наступний етап.
 
-**Проміжний висновок:** дерево тепер є повним вихідним кодом (усі субмодулі на місці). Компіляція перевіряється; APK не оголошується готовим, доки Gradle не завершить збірку успішно і APK не буде встановлено на пристрій.
+**Проміжний висновок:** дерево тепер є повним вихідним кодом (усі субмодулі на місці). Компіляція Java/Kotlin/ресурсів **перевірена успішно** (Gradle, BUILD SUCCESSFUL). APK не оголошується готовим, доки не буде виконано нативну збірку і APK не буде встановлено на пристрій.
