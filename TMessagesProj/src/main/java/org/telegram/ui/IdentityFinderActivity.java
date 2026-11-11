@@ -14,6 +14,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.R;
 import org.telegram.messenger.browser.Browser;
 import org.telegram.nexgram.NexgramPrefs;
 import org.telegram.nexgram.SecureKeyStore;

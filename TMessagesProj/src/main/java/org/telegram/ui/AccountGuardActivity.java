@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import org.json.JSONObject;
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.R;
 import org.telegram.messenger.UserConfig;
 import org.telegram.nexgram.AccountGuardController;
 import org.telegram.nexgram.NexgramPrefs;

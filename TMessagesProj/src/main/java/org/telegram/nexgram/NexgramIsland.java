@@ -259,7 +259,7 @@ public final class NexgramIsland implements NotificationCenter.NotificationCente
             row.setPadding(AndroidUtilities.dp(8), AndroidUtilities.dp(6), AndroidUtilities.dp(14), AndroidUtilities.dp(6));
             addView(row, new FrameLayout.LayoutParams(-1, -2, Gravity.CENTER));
 
-            View avatar = new View(context);
+            FrameLayout avatar = new FrameLayout(context);
             GradientDrawable avatarBg = new GradientDrawable();
             avatarBg.setColor(accent);
             avatarBg.setCornerRadius(AndroidUtilities.dp(18));
