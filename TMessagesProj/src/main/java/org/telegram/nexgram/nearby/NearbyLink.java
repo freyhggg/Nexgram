@@ -59,6 +59,8 @@ public final class NearbyLink {
     private static final byte F_ACK = 7;
     private static final byte ROLE_CONTROL = 0;
     private static final byte ROLE_SEND = 1;
+    private static final byte ROLE_CLIENT = NearbyCrypto.ROLE_CLIENT;
+    private static final byte ROLE_SERVER = NearbyCrypto.ROLE_SERVER;
 
     public interface Listener {
         /** Викликається на UI-потоці: показати діалог згоди на прийом. */

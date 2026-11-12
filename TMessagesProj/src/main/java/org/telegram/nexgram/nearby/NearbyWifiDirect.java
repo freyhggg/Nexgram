@@ -51,7 +51,7 @@ public final class NearbyWifiDirect {
                 return;
             }
             if (WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION.equals(action)) {
-                boolean enabled = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, WifiP2pManager.WIFI_STATE_DISABLED) == WifiP2pManager.WIFI_STATE_ENABLED;
+                boolean enabled = intent.getIntExtra(WifiP2pManager.EXTRA_WIFI_STATE, WifiP2pManager.WIFI_P2P_STATE_DISABLED) == WifiP2pManager.WIFI_P2P_STATE_ENABLED;
                 p2pEnabled = enabled;
                 callbacks.onP2pState(enabled);
             } else if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION.equals(action)) {
@@ -157,21 +157,6 @@ public final class NearbyWifiDirect {
             @Override
             public void onFailure(int reason) {
                 callbacks.onP2pError(reason, "connect");
-            }
-        });
-    }
-
-    public void setDeviceName(String name) {
-        if (manager == null || channel == null) {
-            return;
-        }
-        manager.setDeviceName(channel, name, new WifiP2pManager.ActionListener() {
-            @Override
-            public void onSuccess() {
-            }
-
-            @Override
-            public void onFailure(int reason) {
             }
         });
     }

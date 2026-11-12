@@ -252,7 +252,6 @@ public class NearbyActivity extends BaseFragment {
         String label = label();
         NearbyLink.get().startServer(label);
         wifiDirect.register();
-        wifiDirect.setDeviceName("NEXGRAM " + label);
         wifiDirect.discoverPeers();
         BluetoothManager mgr = (BluetoothManager) activity.getSystemService(Context.BLUETOOTH_SERVICE);
         if (mgr != null && mgr.getAdapter() != null) {
@@ -264,6 +263,15 @@ public class NearbyActivity extends BaseFragment {
         String mac = wifiDirect.getThisDeviceAddress();
         ble.startAdvertising(activity, mac != null ? macBytes(mac) : null);
         ble.startScan(activity);
+        // MAC-адреса власного P2P-інтерфейсу може прийти трохи пізніше — повторюємо маячок
+        AndroidUtilities.runOnUIThread(() -> {
+            if (discovering) {
+                String mac2 = wifiDirect.getThisDeviceAddress();
+                if (mac2 != null) {
+                    ble.startAdvertising(activity, macBytes(mac2));
+                }
+            }
+        }, 3000);
         updateStatus();
     }
 
@@ -462,7 +470,6 @@ public class NearbyActivity extends BaseFragment {
                 dialog.dismiss();
                 decision.decide(false);
             });
-            b.setCanceledOnTouchOutside(false);
             AlertDialog dialog = b.show();
             dialog.setOnCancelListener(d -> decision.decide(false));
         }
@@ -531,6 +538,18 @@ public class NearbyActivity extends BaseFragment {
         if (pendingConnectName == null) {
             return;
         }
+        // 1) надійний шлях: MAC-підказка з BLE-маячка збігається з Wi-Fi Direct піром
+        for (NearbyBle.BleDevice b : bleByName.values()) {
+            String mac = macToString(b.p2pMacHint);
+            WifiP2pDevice peer = mac == null ? null : peersByAddress.get(mac);
+            if (peer != null) {
+                pendingConnectName = null;
+                wifiDirect.connect(peer.deviceAddress);
+                toast("З'єднуюся з " + (peer.deviceName != null && !peer.deviceName.trim().isEmpty() ? peer.deviceName.trim() : mac) + "…");
+                return;
+            }
+        }
+        // 2) запасний шлях: збіг за ім'ям
         for (WifiP2pDevice d : peersByAddress.values()) {
             String n = d.deviceName == null ? "" : d.deviceName.trim();
             if (n.equals(pendingConnectName)) {
@@ -714,6 +733,20 @@ public class NearbyActivity extends BaseFragment {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    private static String macToString(byte[] bytes) {
+        if (bytes == null || bytes.length != 6) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder(17);
+        for (int i = 0; i < 6; i++) {
+            if (i > 0) {
+                sb.append(':');
+            }
+            sb.append(String.format(Locale.US, "%02x", bytes[i] & 0xFF));
+        }
+        return sb.toString();
     }
 
     private void toast(String text) {

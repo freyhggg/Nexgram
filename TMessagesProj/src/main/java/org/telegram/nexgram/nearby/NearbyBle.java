@@ -79,14 +79,19 @@ public final class NearbyBle {
                 .setIncludeDeviceName(false)
                 .setIncludeTxPowerLevel(false)
                 .build();
+        AdvertiseSettings settings = new AdvertiseSettings.Builder()
+                .setAdvertiseMode(AdvertiseSettings.ADVERTISE_MODE_LOW_LATENCY)
+                .setConnectable(false)
+                .setTxPowerLevel(AdvertiseSettings.ADVERTISE_TX_POWER_MEDIUM)
+                .build();
         advertising = true;
         if (Build.VERSION.SDK_INT >= 26) {
             AdvertiseData scanResponse = new AdvertiseData.Builder()
                     .setIncludeDeviceName(true)
                     .build();
-            advertiser.startAdvertising(advertise, scanResponse, advertiseCallback);
+            advertiser.startAdvertising(settings, advertise, scanResponse, advertiseCallback);
         } else {
-            advertiser.startAdvertising(advertise, advertiseCallback);
+            advertiser.startAdvertising(settings, advertise, advertiseCallback);
         }
     }
 
