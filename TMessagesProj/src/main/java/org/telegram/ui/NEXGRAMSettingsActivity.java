@@ -226,7 +226,7 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
         addSection(content, context, "ПРО NEXGRAM");
         LinearLayout about = card(context);
         content.addView(about, margin(0, 0, 0, 12));
-        about.addView(text(context, "NEXGRAM 2.2.0", 16, TEXT, true), margin(0, 0, 0, 6));
+        about.addView(text(context, "NEXGRAM 2.3.0", 16, TEXT, true), margin(0, 0, 0, 6));
         about.addView(text(context, "Модифікація Telegram for Android (GPL-2.0). Мережевий стек, авторизація, чати, медіа та дзвінки — оригінальні компоненти Telegram.", 12, MUTED, false), margin(0, 0, 0, 6));
         about.addView(text(context, "Власні API-ключі — зашифровані секрети CI, у коді їх немає.", 12, MUTED, false), margin(0, 0, 0, 6));
         about.addView(text(context, "P-можливості вільні: значки Premium/Turbo/Nox, експериментальні анімації, NFC-обмін, Identity Finder.", 12, MUTED, false), margin(0, 0, 0, 6));
@@ -240,7 +240,7 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
             builder.show();
         });
 
-        content.addView(text(context, "NEXGRAM 2.2.0 • на основі Telegram for Android", 12, MUTED, false), margin(0, 18, 0, 0));
+        content.addView(text(context, "NEXGRAM 2.3.0 • на основі Telegram for Android", 12, MUTED, false), margin(0, 18, 0, 0));
 
         // NEXGRAM motion: springy press feedback + cascade entrance.
         NexgramAnim.pressScale(guardCard);

@@ -2539,6 +2539,16 @@ public class LoginActivity extends BaseFragment implements NotificationCenter.No
                 addView(bottomSpacer, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT));
             }
 
+            // NEXGRAM: login by QR code (official exportLoginToken flow) — no code, no SMS.
+            TextView qrLoginButton = new TextView(context);
+            qrLoginButton.setText("Увійти по QR-коду (без коду і без SMS)");
+            qrLoginButton.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlueText));
+            qrLoginButton.setTextSize(15);
+            qrLoginButton.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+            qrLoginButton.setPadding(AndroidUtilities.dp(16), AndroidUtilities.dp(10), AndroidUtilities.dp(16), AndroidUtilities.dp(10));
+            addView(qrLoginButton, LayoutHelper.createLinear(LayoutHelper.WRAP_CONTENT, LayoutHelper.WRAP_CONTENT, Gravity.LEFT | Gravity.TOP, 16, 0, 16, 0));
+            qrLoginButton.setOnClickListener(v -> presentFragment(new NexgramQrLoginActivity()));
+
             HashMap<String, String> languageMap = new HashMap<>();
 
             try {
