@@ -63,5 +63,6 @@ jobs:
         with:
           name: nexgram-apk
           path: |
+            TMessagesProj_App/build/outputs/apk/afat/debug/*.apk
             TMessagesProj_App/afat/debug/*.apk
           if-no-files-found: error
