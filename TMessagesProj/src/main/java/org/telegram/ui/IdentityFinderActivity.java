@@ -16,6 +16,7 @@ import android.widget.TextView;
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
 import org.telegram.messenger.browser.Browser;
+import org.telegram.nexgram.NexgramAnim;
 import org.telegram.nexgram.NexgramPrefs;
 import org.telegram.nexgram.SecureKeyStore;
 import org.telegram.nexgram.intelligence.ExternalSearchAdapter;
@@ -50,6 +51,7 @@ public class IdentityFinderActivity extends BaseFragment {
     private static final int WARN = 0xFFFFC24B;
 
     private LinearLayout resultsContainer;
+    private LinearLayout historyContainer;
     private TextView statusLine;
     private TextView keyStatus;
     private EditText queryField;
@@ -117,6 +119,32 @@ public class IdentityFinderActivity extends BaseFragment {
         queryCard.addView(run, margin(0, 10, 0, 0));
         run.setOnClickListener(v -> runSearch(context));
 
+        // --- Search history (local only, capped 12) ---
+        LinearLayout historyCard = card(context);
+        content.addView(historyCard, margin(0, 0, 0, 12));
+        historyCard.addView(text(context, "Історія запитів", 14, TEXT, true), margin(0, 0, 0, 8));
+        historyContainer = new LinearLayout(context);
+        historyContainer.setOrientation(LinearLayout.VERTICAL);
+        historyCard.addView(historyContainer, new LinearLayout.LayoutParams(-1, -2));
+        TextView clearHistory = button(context, "Очистити історію", SURFACE);
+        historyCard.addView(clearHistory, margin(0, 10, 0, 0));
+        clearHistory.setOnClickListener(v -> {
+            NexgramPrefs.clearIntelHistory(context);
+            rebuildHistory(context);
+        });
+        rebuildHistory(context);
+
+        // --- Quick actions ---
+        LinearLayout actionsCard = card(context);
+        content.addView(actionsCard, margin(0, 0, 0, 14));
+        actionsCard.addView(text(context, "Швидкі дії", 14, TEXT, true), margin(0, 0, 0, 8));
+        TextView shareMe = button(context, "Поділитись моїм контактом через NFC", SURFACE);
+        actionsCard.addView(shareMe, margin(0, 0, 0, 10));
+        shareMe.setOnClickListener(v -> presentFragment(new NfcContactActivity()));
+        actionsCard.addView(text(context,
+                "Тепер пошук тісно пов'язаний з NFC-карткою: знайшов людину — піднеси телефон, щоб обмінятися контактами. Публічність і згода залишаються непорушними.",
+                12, MUTED, false));
+
         // External key management
         LinearLayout keyCard = card(context);
         content.addView(keyCard, margin(0, 0, 0, 14));
@@ -149,6 +177,9 @@ public class IdentityFinderActivity extends BaseFragment {
         content.addView(text(context, "Достовірність означає рівень доступу до джерела: «Підтверджено» — жива публічна сторінка перевірена запитом; «Ймовірно» — збіг у публічному індексі; «Непідтверджено» — згадка без прямої сторінки.", 11, MUTED, false), margin(0, 12, 0, 0));
         content.addView(text(context, "NEXGRAM Identity Finder • тільки публічні джерела", 12, MUTED, false), margin(0, 18, 0, 0));
 
+        NexgramAnim.cascade(content);
+        NexgramAnim.pressScale(run);
+
         fragmentView = root;
         return fragmentView;
     }
@@ -157,6 +188,32 @@ public class IdentityFinderActivity extends BaseFragment {
         return externalAdapter != null && externalAdapter.hasKey()
                 ? "Ключ налаштовано і зашифровано (Android Keystore)."
                 : "Ключ не налаштовано. Модуль вимкнено і він не дає результатів.";
+    }
+
+    private void rebuildHistory(Context context) {
+        if (historyContainer == null) {
+            return;
+        }
+        historyContainer.removeAllViews();
+        java.util.List<String> history = NexgramPrefs.intelHistory(context);
+        if (history.isEmpty()) {
+            historyContainer.addView(text(context, "Поки що порожньо — шукай, і запити зберігатимуться локально.", 12, MUTED, false));
+            return;
+        }
+        for (String entry : history) {
+            TextView chip = text(context, entry, 13, TEXT, true);
+            GradientDrawable chipBg = new GradientDrawable();
+            chipBg.setColor(0xFF090812);
+            chipBg.setCornerRadius(AndroidUtilities.dp(12));
+            chip.setBackground(chipBg);
+            chip.setPadding(AndroidUtilities.dp(12), AndroidUtilities.dp(8), AndroidUtilities.dp(12), AndroidUtilities.dp(8));
+            chip.setOnClickListener(v -> {
+                queryField.setText(entry);
+                runSearch(context);
+            });
+            NexgramAnim.pressScale(chip);
+            historyContainer.addView(chip, margin(0, 0, 0, 6));
+        }
     }
 
     private void askForKey(Context context) {
@@ -189,6 +246,8 @@ public class IdentityFinderActivity extends BaseFragment {
             statusCard(context, "Введіть запит.");
             return;
         }
+        NexgramPrefs.rememberIntelQuery(context, query);
+        rebuildHistory(context);
         resultsContainer.removeAllViews();
         statusLine = text(context, "Аналіз запиту та запуск адаптерів…", 13, MUTED, false);
         resultsContainer.addView(statusLine, margin(0, 0, 0, 8));

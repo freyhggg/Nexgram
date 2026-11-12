@@ -1,5 +1,6 @@
 package org.telegram.ui;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -8,14 +9,17 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.Switch;
 import android.widget.TextView;
 
 import org.telegram.messenger.AndroidUtilities;
+import org.telegram.messenger.LocaleController;
 import org.telegram.messenger.R;
 import org.telegram.messenger.SharedConfig;
+import org.telegram.nexgram.NexgramAnim;
 import org.telegram.nexgram.NexgramIsland;
 import org.telegram.nexgram.NexgramPrefs;
 import org.telegram.ui.ActionBar.ActionBar;
@@ -29,6 +33,9 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
     private static final int SURFACE = Color.rgb(21, 16, 32);
     private static final int TEXT = Color.rgb(244, 238, 255);
     private static final int MUTED = Color.rgb(169, 157, 187);
+
+    private ValueAnimator breathingAnimator;
+    private final java.util.List<TextView> iconBadges = new java.util.ArrayList<>();
 
     private static final int[] ACCENTS = new int[] {
             Color.rgb(139, 44, 255), Color.rgb(176, 76, 255),
@@ -53,6 +60,8 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
 
         FrameLayout root = new FrameLayout(context);
         root.setBackgroundColor(BG);
+        // Дихаючий фон — анімація, якої немає в оригінальному Telegram.
+        breathingAnimator = NexgramAnim.breathingBackground(root, BG, Color.rgb(19, 15, 30));
         ScrollView scroll = new ScrollView(context);
         scroll.setFillViewport(true);
         root.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
@@ -135,6 +144,30 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
                 "Впливає на власні анімації NEXGRAM (острівець). Анімації Telegram залишаються недоторканими.",
                 NexgramPrefs.KEY_REDUCE_MOTION, false, (checked) ->
                         NexgramPrefs.setReduceMotion(context, checked));
+        addSwitch(content, context, "Експериментальні анімації",
+                "Каскадна поява екранів, дихаючий фон, пружне натискання на картки — рух, якого немає в оригінальному Telegram. Вимикається разом із «Зменшити анімації».",
+                NexgramPrefs.KEY_ANIM_EXPERIMENTAL, true, (checked) -> {
+                    NexgramPrefs.setAnimExperiments(context, checked);
+                    if (getParentActivity() != null) {
+                        getParentActivity().recreate();
+                    }
+                });
+
+        // --- Personalization (icon = official Telegram premium icons, unlocked) ---
+        addSection(content, context, "ПЕРСОНАЛІЗАЦІЯ");
+        LinearLayout iconCard = card(context);
+        content.addView(iconCard, margin(0, 0, 0, 12));
+        iconCard.addView(text(context, "Значок застосунку", 16, TEXT, true), margin(0, 0, 0, 4));
+        iconCard.addView(text(context,
+                "Офіційні альтернативні значки Telegram. У NEXGRAM усі вільні — включно з тими, що в оригіналі лише для Premium. Зміна застосовується за кілька секунд.",
+                12, MUTED, false), margin(0, 0, 0, 10));
+        LinearLayout iconsRow = new LinearLayout(context);
+        iconsRow.setOrientation(LinearLayout.HORIZONTAL);
+        iconCard.addView(iconsRow, new LinearLayout.LayoutParams(-1, -2));
+        for (LauncherIconController.LauncherIcon icon : LauncherIconController.LauncherIcon.values()) {
+            iconsRow.addView(iconItem(context, icon));
+        }
+        updateIconSelection();
 
         // --- Security ---
         addSection(content, context, "БЕЗПЕКА");
@@ -184,14 +217,19 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
                 "Передача файлів між телефонами поруч: Wi-Fi Direct + BLE-маячок, шифрування ECDH/AES-GCM, згода отримувача обов'язкова.",
                 (v) -> presentFragment(new NearbyActivity()));
         content.addView(nearbyCard, margin(0, 0, 0, 12));
+        LinearLayout nfcCard = entryCard(context, "NFC-картка",
+                "Обмін контактами через NFC: твій телефон — картка для інших, згода з обох боків, збереження в контакти системним редактором.",
+                (v) -> presentFragment(new NfcContactActivity()));
+        content.addView(nfcCard, margin(0, 0, 0, 12));
 
         // --- About ---
         addSection(content, context, "ПРО NEXGRAM");
         LinearLayout about = card(context);
         content.addView(about, margin(0, 0, 0, 12));
-        about.addView(text(context, "NEXGRAM 2.1.2", 16, TEXT, true), margin(0, 0, 0, 6));
+        about.addView(text(context, "NEXGRAM 2.2.0", 16, TEXT, true), margin(0, 0, 0, 6));
         about.addView(text(context, "Модифікація Telegram for Android (GPL-2.0). Мережевий стек, авторизація, чати, медіа та дзвінки — оригінальні компоненти Telegram.", 12, MUTED, false), margin(0, 0, 0, 6));
-        about.addView(text(context, "Собствені API-ключі: BuildVars.java (локально).", 12, MUTED, false), margin(0, 0, 0, 6));
+        about.addView(text(context, "Власні API-ключі — зашифровані секрети CI, у коді їх немає.", 12, MUTED, false), margin(0, 0, 0, 6));
+        about.addView(text(context, "P-можливості вільні: значки Premium/Turbo/Nox, експериментальні анімації, NFC-обмін, Identity Finder.", 12, MUTED, false), margin(0, 0, 0, 6));
         TextView policy = button(context, "Політика модуля Identity Finder", SURFACE);
         about.addView(policy, margin(0, 8, 0, 0));
         policy.setOnClickListener(v -> {
@@ -202,10 +240,77 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
             builder.show();
         });
 
-        content.addView(text(context, "NEXGRAM 2.1.2 • на основі Telegram for Android", 12, MUTED, false), margin(0, 18, 0, 0));
+        content.addView(text(context, "NEXGRAM 2.2.0 • на основі Telegram for Android", 12, MUTED, false), margin(0, 18, 0, 0));
+
+        // NEXGRAM motion: springy press feedback + cascade entrance.
+        NexgramAnim.pressScale(guardCard);
+        NexgramAnim.pressScale(lockCard);
+        NexgramAnim.pressScale(testButton);
+        NexgramAnim.pressScale(intelCard);
+        NexgramAnim.pressScale(nearbyCard);
+        NexgramAnim.pressScale(nfcCard);
+        NexgramAnim.pressScale(policy);
+        NexgramAnim.cascade(content);
 
         fragmentView = root;
         return fragmentView;
+    }
+
+    @Override
+    public void onFragmentDestroy() {
+        if (breathingAnimator != null) {
+            breathingAnimator.cancel();
+            breathingAnimator = null;
+        }
+        super.onFragmentDestroy();
+    }
+
+    /**
+     * One launcher-icon picker item: layered preview (official SA background +
+     * foreground drawables), localized label and a check badge for the active icon.
+     */
+    private View iconItem(Context context, LauncherIconController.LauncherIcon icon) {
+        LinearLayout item = new LinearLayout(context);
+        item.setOrientation(LinearLayout.VERTICAL);
+        item.setGravity(Gravity.CENTER_HORIZONTAL);
+        item.setClickable(true);
+        item.setContentDescription(LocaleController.getString(icon.title));
+
+        FrameLayout preview = new FrameLayout(context);
+        try {
+            preview.setBackground(context.getDrawable(icon.background));
+        } catch (Exception ignored) {
+        }
+        ImageView foreground = new ImageView(context);
+        try {
+            foreground.setImageResource(icon.foreground);
+        } catch (Exception ignored) {
+        }
+        preview.addView(foreground, new FrameLayout.LayoutParams(AndroidUtilities.dp(32), AndroidUtilities.dp(32), Gravity.CENTER));
+
+        TextView badge = text(context, "✓", 12, 0xFF42D392, true);
+        badge.setGravity(Gravity.CENTER);
+        badge.setVisibility(View.GONE);
+        preview.addView(badge, new FrameLayout.LayoutParams(AndroidUtilities.dp(18), AndroidUtilities.dp(18), Gravity.TOP | Gravity.END));
+        iconBadges.add(badge);
+
+        item.addView(preview, new LinearLayout.LayoutParams(AndroidUtilities.dp(52), AndroidUtilities.dp(52)));
+        item.addView(text(context, LocaleController.getString(icon.title), 10, MUTED, false), margin(0, 4, 0, 0));
+        item.setOnClickListener(v -> {
+            LauncherIconController.setIcon(icon);
+            updateIconSelection();
+            NexgramAnim.pop(preview);
+            android.widget.Toast.makeText(context, "Значок змінено: " + LocaleController.getString(icon.title), android.widget.Toast.LENGTH_SHORT).show();
+        });
+        NexgramAnim.pressScale(item);
+        return item;
+    }
+
+    private void updateIconSelection() {
+        for (int i = 0; i < iconBadges.size(); i++) {
+            LauncherIconController.LauncherIcon icon = LauncherIconController.LauncherIcon.values()[i];
+            iconBadges.get(i).setVisibility(LauncherIconController.isEnabled(icon) ? View.VISIBLE : View.GONE);
+        }
     }
 
     private View themeChip(Context context, String label, boolean selected) {
@@ -234,6 +339,8 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
         NEXGRAMTheme.setThemeMode(context, mode);
         nexChip.setBackground(chipShape(mode == NEXGRAMTheme.THEME_NEXGRAM));
         dcChip.setBackground(chipShape(mode == NEXGRAMTheme.THEME_DISCORD));
+        NexgramAnim.pop(nexChip);
+        NexgramAnim.pop(dcChip);
         android.widget.Toast.makeText(context, "Тему застосовано", android.widget.Toast.LENGTH_SHORT).show();
         if (getParentActivity() != null) {
             getParentActivity().recreate();

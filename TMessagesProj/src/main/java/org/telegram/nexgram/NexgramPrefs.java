@@ -27,6 +27,11 @@ public final class NexgramPrefs {
     public static final String KEY_GUARD_KNOWN_HASHES = "guard_known_hashes";
     public static final String KEY_GUARD_INCIDENTS = "guard_incident_log";
     public static final String KEY_INTEL_KEY_CIPHER = "intel_search_key_cipher";
+    public static final String KEY_INTEL_HISTORY = "intel_search_history";
+    public static final String KEY_ANIM_EXPERIMENTAL = "anim_experimental";
+    public static final String KEY_NFC_SHARE = "nfc_share_enabled";
+    public static final String KEY_NFC_SHARE_USERNAME = "nfc_share_username";
+    public static final String KEY_NFC_SHARE_PHONE = "nfc_share_phone";
 
     public static final int DEFAULT_ACCENT = 0xFF8B2CFF;
 
@@ -71,6 +76,85 @@ public final class NexgramPrefs {
 
     public static void setIslandAnimations(Context context, boolean value) {
         get(context).edit().putBoolean(KEY_ISLAND_ANIMATIONS, value).apply();
+    }
+
+    // --- NEXGRAM animations (experimental effects, beyond original Telegram) ---
+
+    /** Master gate for all experimental NEXGRAM animations. */
+    public static boolean animExperiments(Context context) {
+        return get(context).getBoolean(KEY_ANIM_EXPERIMENTAL, true) && !reduceMotion(context);
+    }
+
+    public static void setAnimExperiments(Context context, boolean value) {
+        get(context).edit().putBoolean(KEY_ANIM_EXPERIMENTAL, value).apply();
+    }
+
+    // --- NFC contact card ---
+
+    public static boolean nfcShareEnabled(Context context) {
+        return get(context).getBoolean(KEY_NFC_SHARE, false);
+    }
+
+    public static void setNfcShareEnabled(Context context, boolean value) {
+        get(context).edit().putBoolean(KEY_NFC_SHARE, value).apply();
+    }
+
+    public static boolean nfcShareUsername(Context context) {
+        return get(context).getBoolean(KEY_NFC_SHARE_USERNAME, true);
+    }
+
+    public static void setNfcShareUsername(Context context, boolean value) {
+        get(context).edit().putBoolean(KEY_NFC_SHARE_USERNAME, value).apply();
+    }
+
+    public static boolean nfcSharePhone(Context context) {
+        return get(context).getBoolean(KEY_NFC_SHARE_PHONE, false);
+    }
+
+    public static void setNfcSharePhone(Context context, boolean value) {
+        get(context).edit().putBoolean(KEY_NFC_SHARE_PHONE, value).apply();
+    }
+
+    // --- Identity Finder: search history (capped) ---
+
+    public static List<String> intelHistory(Context context) {
+        List<String> result = new ArrayList<>();
+        String raw = get(context).getString(KEY_INTEL_HISTORY, null);
+        if (raw != null) {
+            try {
+                JSONArray array = new JSONArray(raw);
+                for (int i = 0; i < array.length(); i++) {
+                    String value = array.optString(i, null);
+                    if (value != null && !value.isEmpty()) {
+                        result.add(value);
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return result;
+    }
+
+    /** Moves the query to the top of history (dedup). Capped at 12 entries. */
+    public static void rememberIntelQuery(Context context, String query) {
+        try {
+            List<String> current = intelHistory(context);
+            current.remove(query);
+            current.add(0, query);
+            while (current.size() > 12) {
+                current.remove(current.size() - 1);
+            }
+            JSONArray array = new JSONArray();
+            for (String entry : current) {
+                array.put(entry);
+            }
+            get(context).edit().putString(KEY_INTEL_HISTORY, array.toString()).apply();
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static void clearIntelHistory(Context context) {
+        get(context).edit().remove(KEY_INTEL_HISTORY).apply();
     }
 
     // --- Account Guard: known session registry ---

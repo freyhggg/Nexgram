@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- NEXGRAM NFC contact card: externally-defined AID (F0 prefix), category "other". -->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/NexgramAppName"
+    android:requireDeviceUnlock="false">
+    <aid-group
+        android:category="other"
+        android:description="@string/NexgramAppName">
+        <aid-filter android:name="F0010203040506" />
+    </aid-group>
+</host-apdu-service>

@@ -162,14 +162,28 @@ public final class NexgramIsland implements NotificationCenter.NotificationCente
         if (!visible) {
             visible = true;
             if (NexgramPrefs.islandAnimations(activity)) {
-                view.setTranslationY(-AndroidUtilities.dp(64));
+                // NEXGRAM entrance: spring overshoot + scale — noticeably juicier
+                // than a plain fade and unique to NEXGRAM (original Telegram
+                // has no in-app banner like this).
+                view.setTranslationY(-AndroidUtilities.dp(72));
+                view.setScaleX(0.88f);
+                view.setScaleY(0.88f);
                 animator = ValueAnimator.ofFloat(0f, 1f);
                 animator.addUpdateListener(a -> {
                     float fraction = a.getAnimatedFraction();
-                    view.setAlpha(fraction);
-                    view.setTranslationY(-AndroidUtilities.dp(64) * (1f - fraction));
+                    view.setAlpha(Math.min(1f, fraction * 1.6f));
+                    view.setTranslationY(-AndroidUtilities.dp(72) * (1f - fraction));
                 });
-                animator.setDuration(240);
+                animator.setDuration(380);
+                animator.addListener(new AnimatorListenerAdapter() {
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        view.animate().scaleX(1f).scaleY(1f).setDuration(240)
+                                .setInterpolator(new android.view.animation.OvershootInterpolator(1.7f))
+                                .setStartDelay(0)
+                                .start();
+                    }
+                });
                 animator.start();
             } else {
                 view.setAlpha(1f);
