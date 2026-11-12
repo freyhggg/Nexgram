@@ -129,11 +129,18 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
                 (v) -> presentFragment(new IdentityFinderActivity()));
         content.addView(intelCard, margin(0, 0, 0, 12));
 
+        // --- Nearby ---
+        addSection(content, context, "ПРИСТРОЇ ПОБЛИЗУ");
+        LinearLayout nearbyCard = entryCard(context, "Nearby",
+                "Передача файлів між телефонами поруч: Wi-Fi Direct + BLE-маячок, шифрування ECDH/AES-GCM, згода отримувача обов'язкова.",
+                (v) -> presentFragment(new NearbyActivity()));
+        content.addView(nearbyCard, margin(0, 0, 0, 12));
+
         // --- About ---
         addSection(content, context, "ПРО NEXGRAM");
         LinearLayout about = card(context);
         content.addView(about, margin(0, 0, 0, 12));
-        about.addView(text(context, "NEXGRAM 2.0.0", 16, TEXT, true), margin(0, 0, 0, 6));
+        about.addView(text(context, "NEXGRAM 2.1.0", 16, TEXT, true), margin(0, 0, 0, 6));
         about.addView(text(context, "Модифікація Telegram for Android (GPL-2.0). Мережевий стек, авторизація, чати, медіа та дзвінки — оригінальні компоненти Telegram.", 12, MUTED, false), margin(0, 0, 0, 6));
         about.addView(text(context, "Собствені API-ключі: BuildVars.java (локально).", 12, MUTED, false), margin(0, 0, 0, 6));
         TextView policy = button(context, "Політика модуля Identity Finder", SURFACE);
@@ -146,7 +153,7 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
             builder.show();
         });
 
-        content.addView(text(context, "NEXGRAM 2.0.0 • на основі Telegram for Android", 12, MUTED, false), margin(0, 18, 0, 0));
+        content.addView(text(context, "NEXGRAM 2.1.0 • на основі Telegram for Android", 12, MUTED, false), margin(0, 18, 0, 0));
 
         fragmentView = root;
         return fragmentView;
