@@ -15,6 +15,7 @@ import android.widget.TextView;
 
 import org.telegram.messenger.AndroidUtilities;
 import org.telegram.messenger.R;
+import org.telegram.messenger.SharedConfig;
 import org.telegram.nexgram.NexgramIsland;
 import org.telegram.nexgram.NexgramPrefs;
 import org.telegram.ui.ActionBar.ActionBar;
@@ -142,6 +143,34 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
                 (v) -> presentFragment(new AccountGuardActivity()));
         content.addView(guardCard, margin(0, 0, 0, 12));
 
+        // --- App lock (офіційне код-блокування Telegram) ---
+        LinearLayout lockCard = entryCard(context, "Код-блокування",
+                SharedConfig.passcodeHash.isEmpty()
+                        ? "PIN, пароль або відбиток при вході в застосунок. Офіційний механізм Telegram."
+                        : "Увімкнено. Вхід у застосунок захищено; керування — після введення коду.",
+                (v) -> presentFragment(PasscodeActivity.determineOpenFragment()));
+        content.addView(lockCard, margin(0, 0, 0, 12));
+
+        // --- Telegram test environment (тестовий сервер) ---
+        final boolean onTestBackend = getConnectionsManager().isTestBackend();
+        LinearLayout testCard = card(context);
+        content.addView(testCard, margin(0, 0, 0, 12));
+        LinearLayout testStatus = new LinearLayout(context);
+        testStatus.setOrientation(LinearLayout.HORIZONTAL);
+        testStatus.setGravity(Gravity.CENTER_VERTICAL);
+        testStatus.addView(text(context, "●", 14, onTestBackend ? 0xFFFF9800 : 0xFF42D392, true), margin(2, 0, 8, 0));
+        testStatus.addView(text(context, onTestBackend ? "ПІДКЛЮЧЕНО ДО ТЕСТОВОГО СЕРВЕРА" : "Підключено до основного сервера",
+                14, onTestBackend ? 0xFFFF9800 : TEXT, true));
+        testCard.addView(testStatus, margin(0, 0, 0, 6));
+        testCard.addView(text(context,
+                onTestBackend
+                        ? "Тестове середовище Telegram: окрема база, окремі акаунти й чати. Основний акаунт звідси недоступний — це ізольований світ. Для повернення натисни кнопку нижче й увійди на основному сервері."
+                        : "Тестовий сервер Telegram — ізольоване середовище для тестів: окрема база даних, окремі акаунти, нічого не потрапляє в основний акаунт. Основна сесія на серверах Telegram не постраждає, але локальна сесія цього середовища буде вилучена й знадобиться повторний вхід.",
+                12, MUTED, false), margin(0, 0, 0, 12));
+        TextView testButton = button(context, onTestBackend ? "Повернутись на основний сервер" : "Перейти на тестовий сервер", SURFACE);
+        testCard.addView(testButton, margin(0, 4, 0, 0));
+        testButton.setOnClickListener(v -> confirmBackendSwitch(context, !onTestBackend));
+
         // --- Intelligence ---
         addSection(content, context, "РОЗУМНИЙ ПОШУК");
         LinearLayout intelCard = entryCard(context, "Identity Finder",
@@ -160,7 +189,7 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
         addSection(content, context, "ПРО NEXGRAM");
         LinearLayout about = card(context);
         content.addView(about, margin(0, 0, 0, 12));
-        about.addView(text(context, "NEXGRAM 2.1.1", 16, TEXT, true), margin(0, 0, 0, 6));
+        about.addView(text(context, "NEXGRAM 2.1.2", 16, TEXT, true), margin(0, 0, 0, 6));
         about.addView(text(context, "Модифікація Telegram for Android (GPL-2.0). Мережевий стек, авторизація, чати, медіа та дзвінки — оригінальні компоненти Telegram.", 12, MUTED, false), margin(0, 0, 0, 6));
         about.addView(text(context, "Собствені API-ключі: BuildVars.java (локально).", 12, MUTED, false), margin(0, 0, 0, 6));
         TextView policy = button(context, "Політика модуля Identity Finder", SURFACE);
@@ -173,7 +202,7 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
             builder.show();
         });
 
-        content.addView(text(context, "NEXGRAM 2.1.1 • на основі Telegram for Android", 12, MUTED, false), margin(0, 18, 0, 0));
+        content.addView(text(context, "NEXGRAM 2.1.2 • на основі Telegram for Android", 12, MUTED, false), margin(0, 18, 0, 0));
 
         fragmentView = root;
         return fragmentView;
@@ -209,6 +238,45 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
         if (getParentActivity() != null) {
             getParentActivity().recreate();
         }
+    }
+
+    private void confirmBackendSwitch(Context context, final boolean toTest) {
+        Context parent = getParentActivity() != null ? getParentActivity() : context;
+        AlertDialog.Builder builder = new AlertDialog.Builder(parent);
+        builder.setTitle(toTest ? "Перейти на тестовий сервер?" : "Повернутись на основний?");
+        builder.setMessage(toTest
+                ? "Тестовий сервер — окремий світ Telegram: інші акаунти, інші чати, інші обмеження.\n\n"
+                  + "• Основний акаунт на серверах Telegram залишиться недоторканим\n"
+                  + "• Локальна сесія основного сервера буде вилучена з цього пристрою\n"
+                  + "• Після перемикання знадобиться повторний вхід (перемикач «Test backend» на екрані входу буде вже активний)\n\n"
+                  + "Продовжити?"
+                : "Застосунок повернеться на основний сервер Telegram.\n\n"
+                  + "• Локальна сесія тестового сервера буде вилучена\n"
+                  + "• Потрібен повторний вхід основним акаунтом\n\n"
+                  + "Продовжити?");
+        builder.setNegativeButton("Скасувати", null);
+        builder.setPositiveButton("Далі", (dialog, which) -> {
+            AlertDialog.Builder confirm = new AlertDialog.Builder(parent);
+            confirm.setTitle("Підтвердження");
+            confirm.setMessage(toTest
+                    ? "Застосунок перезапуститься і підключиться до тестових датацентрів Telegram. Сесію цього середовища буде вилучено. Точно перемкнути?"
+                    : "Застосунок перезапуститься і підключиться до основних датацентрів Telegram. Сесію тестового сервера буде вилучено. Точно перемкнути?");
+            confirm.setNegativeButton("Скасувати", null);
+            confirm.setPositiveButton("Так, перемкнути", (d2, w2) -> performBackendSwitch());
+            confirm.show();
+        });
+        builder.show();
+    }
+
+    private void performBackendSwitch() {
+        // Офіційний патерн Telegram (ProfileActivity → switchBackendRow):
+        // скидання push-ключів, потім нативне перемикання прапорця тестового середовища.
+        // Нативно: testBackend = !testBackend; datacenters.clear(); initDatacenters();
+        // saveConfig(); exit(1) — процес перезапускається у новому середовищі.
+        SharedConfig.pushAuthKey = null;
+        SharedConfig.pushAuthKeyId = null;
+        SharedConfig.saveConfig();
+        getConnectionsManager().switchBackend(true);
     }
 
     private GradientDrawable swatchShape(Context context, int color, boolean selected) {
