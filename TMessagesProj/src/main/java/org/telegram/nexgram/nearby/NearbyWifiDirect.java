@@ -32,16 +32,12 @@ public final class NearbyWifiDirect {
 
     private final Context context;
     private final Callbacks callbacks;
+    private final WifiP2pManager.PeerListListener peersListener;
     private WifiP2pManager manager;
     private WifiP2pManager.Channel channel;
     private volatile boolean registered;
     private volatile Boolean p2pEnabled = null;
     private volatile String thisDeviceAddress;
-
-    private final WifiP2pManager.PeerListListener peersListener = (WifiP2pDeviceList list) -> {
-        List<WifiP2pDevice> peers = new ArrayList<>(list.getDeviceList());
-        callbacks.onPeers(peers);
-    };
 
     private final BroadcastReceiver receiver = new BroadcastReceiver() {
         @Override
@@ -81,6 +77,10 @@ public final class NearbyWifiDirect {
     public NearbyWifiDirect(Context context, Callbacks callbacks) {
         this.context = context.getApplicationContext();
         this.callbacks = callbacks;
+        this.peersListener = (WifiP2pDeviceList list) -> {
+            List<WifiP2pDevice> peers = new ArrayList<>(list.getDeviceList());
+            callbacks.onPeers(peers);
+        };
     }
 
     public void register() {
