@@ -37,22 +37,26 @@ jobs:
           sdkmanager --install "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
           yes | sdkmanager --licenses > /dev/null || true
 
-      - name: Inject Telegram API credentials
-        if: ${{ secrets.TG_API_ID != '' }}
+      - name: Inject Telegram API credentials (optional)
+        env:
+          TG_API_ID: ${{ secrets.TG_API_ID }}
+          TG_API_HASH: ${{ secrets.TG_API_HASH }}
         run: |
+          if [ -z "$TG_API_ID" ] || [ -z "$TG_API_HASH" ]; then
+            echo "TG_API_ID/TG_API_HASH не задані — збірка з публічними тестовими ключами Telegram (APP_ID=4)."
+            exit 0
+          fi
           python3 - <<'PY'
           import os, re
           path = "TMessagesProj/src/main/java/org/telegram/messenger/BuildVars.java"
           src = open(path).read()
           src = src.replace("public static int APP_ID = 4;",
-                            f"public static int APP_ID = {os.environ['TG_API_ID']};")
+                            "public static int APP_ID = " + os.environ["TG_API_ID"] + ";")
           src = re.sub(r'public static String APP_HASH = "[^"]*";',
-                       f'public static String APP_HASH = "{os.environ["TG_API_HASH"]}";', src)
+                       'public static String APP_HASH = "' + os.environ["TG_API_HASH"] + '";', src)
           open(path, "w").write(src)
+          print("Telegram API credentials injected into BuildVars.java")
           PY
-        env:
-          TG_API_ID: ${{ secrets.TG_API_ID }}
-          TG_API_HASH: ${{ secrets.TG_API_HASH }}
 
       - name: Build NEXGRAM (afat debug)
         run: |
