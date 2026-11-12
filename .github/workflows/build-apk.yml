@@ -29,13 +29,11 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install NDK 27.2 and CMake 3.22.1
+      - name: Install NDK 27.2 and CMake 3.22.1 (via preinstalled SDK)
         run: |
-          sdkmanager --install "ndk;27.2.12479018" "cmake;3.22.1" > /dev/null
-          yes | sdkmanager --licenses > /dev/null || true
+          SDKM="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKM" --licenses > /dev/null || true
+          "$SDKM" --install "ndk;27.2.12479018" "cmake;3.22.1"
 
       - name: Inject Telegram API credentials (optional)
         env:
