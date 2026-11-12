@@ -92,6 +92,26 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
                 }
             });
         }
+        content.addView(text(context, "Акцент діє у темі NEXGRAM", 11, MUTED, false), margin(2, 0, 0, 0));
+
+        // --- Theme mode: NEXGRAM / Discord ---
+        LinearLayout themeCard = card(context);
+        content.addView(themeCard, margin(0, 0, 0, 12));
+        themeCard.addView(text(context, "Тема оформлення", 16, TEXT, true), margin(0, 0, 0, 6));
+        themeCard.addView(text(context, "Discord — темно-сірий із blurple-акцентом. NEXGRAM — фіолетовий неон.", 12, MUTED, false), margin(0, 0, 0, 12));
+        LinearLayout themeRow = new LinearLayout(context);
+        themeRow.setOrientation(LinearLayout.HORIZONTAL);
+        themeCard.addView(themeRow, new LinearLayout.LayoutParams(-1, AndroidUtilities.dp(44)));
+        View nexChip = themeChip(context, "NEXGRAM", NEXGRAMTheme.getThemeMode(context) == NEXGRAMTheme.THEME_NEXGRAM);
+        View dcChip = themeChip(context, "Discord", NEXGRAMTheme.getThemeMode(context) == NEXGRAMTheme.THEME_DISCORD);
+        LinearLayout.LayoutParams nexParams = new LinearLayout.LayoutParams(0, AndroidUtilities.dp(44), 1f);
+        nexParams.rightMargin = AndroidUtilities.dp(10);
+        themeRow.addView(nexChip, nexParams);
+        LinearLayout.LayoutParams dcParams = new LinearLayout.LayoutParams(0, AndroidUtilities.dp(44), 1f);
+        dcParams.leftMargin = AndroidUtilities.dp(10);
+        themeRow.addView(dcChip, dcParams);
+        nexChip.setOnClickListener(v -> switchTheme(context, NEXGRAMTheme.THEME_NEXGRAM, nexChip, dcChip));
+        dcChip.setOnClickListener(v -> switchTheme(context, NEXGRAMTheme.THEME_DISCORD, nexChip, dcChip));
 
         // --- NEXGRAM Island ---
         addSection(content, context, "СПОВІЩЕННЯ");
@@ -140,7 +160,7 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
         addSection(content, context, "ПРО NEXGRAM");
         LinearLayout about = card(context);
         content.addView(about, margin(0, 0, 0, 12));
-        about.addView(text(context, "NEXGRAM 2.1.0", 16, TEXT, true), margin(0, 0, 0, 6));
+        about.addView(text(context, "NEXGRAM 2.1.1", 16, TEXT, true), margin(0, 0, 0, 6));
         about.addView(text(context, "Модифікація Telegram for Android (GPL-2.0). Мережевий стек, авторизація, чати, медіа та дзвінки — оригінальні компоненти Telegram.", 12, MUTED, false), margin(0, 0, 0, 6));
         about.addView(text(context, "Собствені API-ключі: BuildVars.java (локально).", 12, MUTED, false), margin(0, 0, 0, 6));
         TextView policy = button(context, "Політика модуля Identity Finder", SURFACE);
@@ -153,10 +173,42 @@ public class NEXGRAMSettingsActivity extends BaseFragment {
             builder.show();
         });
 
-        content.addView(text(context, "NEXGRAM 2.1.0 • на основі Telegram for Android", 12, MUTED, false), margin(0, 18, 0, 0));
+        content.addView(text(context, "NEXGRAM 2.1.1 • на основі Telegram for Android", 12, MUTED, false), margin(0, 18, 0, 0));
 
         fragmentView = root;
         return fragmentView;
+    }
+
+    private View themeChip(Context context, String label, boolean selected) {
+        TextView view = new TextView(context);
+        view.setText(label);
+        view.setTextSize(14);
+        view.setTextColor(selected ? 0xFFFFFFFF : TEXT);
+        view.setTypeface(Typeface.DEFAULT, Typeface.BOLD);
+        view.setGravity(Gravity.CENTER);
+        view.setBackground(chipShape(selected));
+        view.setContentDescription("Тема " + label);
+        return view;
+    }
+
+    private GradientDrawable chipShape(boolean selected) {
+        GradientDrawable shape = new GradientDrawable();
+        shape.setColor(selected ? 0xFF5865F2 : SURFACE);
+        shape.setCornerRadius(AndroidUtilities.dp(14));
+        return shape;
+    }
+
+    private void switchTheme(Context context, int mode, View nexChip, View dcChip) {
+        if (NEXGRAMTheme.getThemeMode(context) == mode) {
+            return;
+        }
+        NEXGRAMTheme.setThemeMode(context, mode);
+        nexChip.setBackground(chipShape(mode == NEXGRAMTheme.THEME_NEXGRAM));
+        dcChip.setBackground(chipShape(mode == NEXGRAMTheme.THEME_DISCORD));
+        android.widget.Toast.makeText(context, "Тему застосовано", android.widget.Toast.LENGTH_SHORT).show();
+        if (getParentActivity() != null) {
+            getParentActivity().recreate();
+        }
     }
 
     private GradientDrawable swatchShape(Context context, int color, boolean selected) {
